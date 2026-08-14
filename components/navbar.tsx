@@ -9,7 +9,6 @@ export default function Navbar() {
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             <Wallet className="h-7 w-7 text-green-500" />
-            <span className="text-green-500 font-semibold">wallet</span>
             <span className="text-white font-bold">SubIntel</span>
           </Link>
 
@@ -17,8 +16,8 @@ export default function Navbar() {
             <Link href="#features" className="text-white/80 hover:text-white">Features</Link>
             <Link href="#pricing" className="text-white/80 hover:text-white">Pricing</Link>
             <Link href="#docs" className="text-white/80 hover:text-white">Docs</Link>
-            <Button size="sm" variant="default" className="ml-4" render={<Link href="#" />} nativeButton={false}>
-              Get started
+            <Button size="sm" variant="default" className="ml-4 p-3 rounded-3xl" render={<Link href="/login" />} nativeButton={false}>
+                Get Started
             </Button>
           </nav>
 

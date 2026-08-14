@@ -21,7 +21,6 @@ export default function HeroSection() {
       <div className="flex items-center justify-center gap-3">
         <Wallet className="h-12 w-12 text-green-500" />
         <h1 className="text-4xl font-bold leading-tight text-white md:text-5xl">
-          <span className="text-green-500">wallet</span>{" "}
           <span className="text-white">SubIntel</span>
         </h1>
       </div>
@@ -30,7 +29,7 @@ export default function HeroSection() {
         detect duplicate subscriptions, and get automated savings recommendations in real time.
       </p>
       <div className="mt-10 flex items-center justify-center gap-x-3">
-        <Button size="lg" className={"rounded-3xl bg-white p-4 text-black hover:bg-white/90"} render={<Link href="#" />} nativeButton={false}>Get started</Button>
+        <Button size="lg" className={"rounded-3xl bg-white p-4 text-black hover:bg-white/90"} render={<Link href="/login" />} nativeButton={false}>Get started</Button>
         <Button size="lg" variant="ghost" className="font-semibold text-white hover:bg-white/10" render={<Link href="#" />} nativeButton={false}>Learn more <ArrowRightIcon className="ml-1 h-4 w-4" /></Button>
       </div>
     </div>

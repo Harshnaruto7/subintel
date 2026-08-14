@@ -8,7 +8,6 @@ export default function Footer() {
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
           <div className="flex items-center gap-2">
             <Wallet className="h-6 w-6 text-green-500" />
-            <span className="text-green-500 font-semibold">wallet</span>
             <span className="text-white font-medium">SubIntel</span>
           </div>
           <div className="flex gap-4">
@@ -18,14 +17,8 @@ export default function Footer() {
           </div>
         </div>
 
-        <p className="mt-6 text-sm">
-          © {new Date().getFullYear()}{" "}
-          <span className="inline-flex items-center gap-2">
-            <Wallet className="h-4 w-4 text-green-500" />
-            <span className="text-green-500 font-semibold">wallet</span>
-            <span className="text-white">SubIntel</span>
-          </span>{" "}
-          All rights reserved.
+        <p className="mt-8 text-xs text-white/60 flex items-center justify-center gap-1">
+          © {new Date().getFullYear()} <Wallet className="h-4 w-4 text-green-500" /> <span className="text-white">SubIntel</span>. All rights reserved.
         </p>
       </div>
     </footer>
