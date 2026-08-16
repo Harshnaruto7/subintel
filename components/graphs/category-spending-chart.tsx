@@ -2,11 +2,7 @@
 
 import { useState } from "react";
 
-import {
-  Cell,
-  Pie,
-  PieChart,
-} from "recharts";
+import { Cell, Pie, PieChart } from "recharts";
 
 import {
   Card,
@@ -20,7 +16,6 @@ import {
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
-  ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
 
@@ -33,11 +28,11 @@ type Props = {
 };
 
 const categoryColors = [
-  "#22c55e",
-  "#3b82f6",
-  "#a855f7",
-  "#f59e0b",
-  "#ef4444",
+  "#22c55e", // Green
+  "#3b82f6", // Blue
+  "#a855f7", // Purple
+  "#f59e0b", // Orange
+  "#ef4444", // Red
 ];
 
 export default function CategorySpendingChart({
@@ -47,12 +42,21 @@ export default function CategorySpendingChart({
     "monthly" | "yearly"
   >("monthly");
 
+  /*
+   * Prepare chart data
+   */
   const chartData = data.map((item, index) => ({
     name: item.name,
     value: item[period],
-    fill: categoryColors[index % categoryColors.length],
+    fill:
+      categoryColors[
+        index % categoryColors.length
+      ],
   }));
 
+  /*
+   * Chart configuration
+   */
   const chartConfig = data.reduce(
     (config, item, index) => {
       config[item.name] = {
@@ -70,6 +74,8 @@ export default function CategorySpendingChart({
 
   return (
     <Card className="h-full">
+      {/* ================= HEADER ================= */}
+
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle>
@@ -83,11 +89,14 @@ export default function CategorySpendingChart({
           </p>
         </div>
 
-        {/* Period Switch */}
+        {/* ================= PERIOD SWITCH ================= */}
+
         <div className="flex items-center rounded-lg border bg-muted/40 p-1">
           <button
             type="button"
-            onClick={() => setPeriod("monthly")}
+            onClick={() =>
+              setPeriod("monthly")
+            }
             className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
               period === "monthly"
                 ? "bg-background text-foreground shadow-sm"
@@ -99,7 +108,9 @@ export default function CategorySpendingChart({
 
           <button
             type="button"
-            onClick={() => setPeriod("yearly")}
+            onClick={() =>
+              setPeriod("yearly")
+            }
             className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
               period === "yearly"
                 ? "bg-background text-foreground shadow-sm"
@@ -111,22 +122,70 @@ export default function CategorySpendingChart({
         </div>
       </CardHeader>
 
+      {/* ================= CHART ================= */}
+
       <CardContent>
         <ChartContainer
           config={chartConfig}
           className="min-h-[280px] w-full"
         >
           <PieChart>
+
+            {/* ================= CUSTOM TOOLTIP ================= */}
+
             <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  nameKey="name"
-                  formatter={(value) =>
-                    `₹${Number(value).toLocaleString("en-IN")}`
-                  }
-                />
-              }
+              cursor={false}
+              content={({ active, payload }) => {
+                if (
+                  !active ||
+                  !payload ||
+                  payload.length === 0
+                ) {
+                  return null;
+                }
+
+                const item =
+                  payload[0]?.payload;
+
+                if (!item) {
+                  return null;
+                }
+
+                return (
+                  <div className="rounded-lg border border-border/50 bg-background px-3 py-2 shadow-xl">
+                    <div className="flex items-center gap-2">
+
+                      {/* Color indicator */}
+                      <span
+                        className="h-2.5 w-2.5 shrink-0 rounded-[3px]"
+                        style={{
+                          backgroundColor:
+                            item.fill,
+                        }}
+                      />
+
+                      {/* Category */}
+                      <span className="text-sm font-medium">
+                        {item.name}
+                      </span>
+
+                    </div>
+
+                    {/* Amount */}
+                    <div className="mt-1 text-sm font-semibold">
+                      ₹
+                      {Number(
+                        item.value
+                      ).toLocaleString(
+                        "en-IN"
+                      )}
+                    </div>
+                  </div>
+                );
+              }}
             />
+
+            {/* ================= DONUT ================= */}
 
             <Pie
               data={chartData}
@@ -137,19 +196,26 @@ export default function CategorySpendingChart({
               paddingAngle={3}
               strokeWidth={0}
             >
-              {chartData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={entry.fill}
-                />
-              ))}
+              {chartData.map(
+                (entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.fill}
+                  />
+                )
+              )}
             </Pie>
+
+            {/* ================= LEGEND ================= */}
 
             <ChartLegend
               content={
-                <ChartLegendContent nameKey="name" />
+                <ChartLegendContent
+                  nameKey="name"
+                />
               }
             />
+
           </PieChart>
         </ChartContainer>
       </CardContent>

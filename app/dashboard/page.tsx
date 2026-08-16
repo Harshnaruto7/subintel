@@ -24,7 +24,18 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import LottieAnimation from "@/components/lottie-animation";
+import { addToast } from "@/components/ui/toast";
 
 export default function DashboardPage() {
   const { user } = useUser();
@@ -33,6 +44,10 @@ export default function DashboardPage() {
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [mounted, setMounted] = useState(false);
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedSubscription, setSelectedSubscription] =
+    useState<Subscription | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -46,13 +61,51 @@ export default function DashboardPage() {
     }
 
     loadSubscriptions();
-  }, [user]);
+  }, [user, supabase]);
 
-  async function handleDelete(id: string) {
-    await deleteSubscription(supabase, id);
+  function openDeleteDialog(sub: Subscription) {
+    setSelectedSubscription(sub);
+    setDeleteDialogOpen(true);
+  }
 
-    const subscriptions = await getSubscriptions(supabase);
-    setSubs(subscriptions);
+  async function handleDelete() {
+    if (!selectedSubscription) return;
+
+    const { id, name } = selectedSubscription;
+
+    try {
+      await deleteSubscription(supabase, id);
+
+      const subscriptions = await getSubscriptions(supabase);
+      setSubs(subscriptions);
+
+      const service = getServiceIcon(name);
+      const Icon = service.icon;
+
+      addToast({
+        title: `${name} deleted`,
+        description: `${name} was removed from your subscriptions.`,
+        type: "success",
+        icon: (
+          <Icon
+            className="h-4 w-4"
+            style={{ color: service.color }}
+          />
+        ),
+      });
+    } catch (error) {
+      console.error("Failed to delete subscription:", error);
+
+      addToast({
+        title: "Could not delete subscription",
+        description:
+          "Something went wrong while deleting the subscription.",
+        type: "error",
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setSelectedSubscription(null);
+    }
   }
 
   function categoryLabel(id: string) {
@@ -64,7 +117,7 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-2xl font-bold">Dashboard</h1>
 
-        <p className="text-gray-400 mb-6">
+        <p className="mb-6 text-gray-400">
           Welcome to your dashboard.
         </p>
       </div>
@@ -75,7 +128,7 @@ export default function DashboardPage() {
     <div>
       <h1 className="text-2xl font-bold">Dashboard</h1>
 
-      <p className="text-gray-400 mb-6">
+      <p className="mb-6 text-gray-400">
         Welcome to your dashboard.
       </p>
 
@@ -84,7 +137,7 @@ export default function DashboardPage() {
           No subscriptions added yet. Go to Add Item to get started.
         </p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {subs.map((sub) => {
             const service = getServiceIcon(sub.name);
             const Icon = service.icon;
@@ -99,31 +152,29 @@ export default function DashboardPage() {
                       <Card className="relative overflow-hidden transition-transform hover:scale-[1.01]">
                         <CardHeader className="flex flex-row items-start justify-between">
                           <div className="flex items-center gap-2">
-                            {/* Service/App Icon */}
                             <Icon
                               className="h-5 w-5"
-                              style={{ color: service.color }}
+                              style={{
+                                color: service.color,
+                              }}
                             />
 
-                            {/* Subscription Name */}
                             <CardTitle className="text-base">
                               {sub.name}
                             </CardTitle>
 
-                            {/* Category Icon */}
                             <CategoryIcon
                               categoryId={sub.categoryId}
                               className="h-4 w-4 text-gray-400"
                             />
                           </div>
 
-                          {/* Delete Button */}
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDelete(sub.id);
+                              openDeleteDialog(sub);
                             }}
                           >
                             <Trash2 className="h-4 w-4 text-red-400" />
@@ -131,24 +182,21 @@ export default function DashboardPage() {
                         </CardHeader>
 
                         <CardContent>
-                          {/* Category */}
                           <p className="text-sm text-gray-400">
                             {categoryLabel(sub.categoryId)}
                           </p>
 
-                          {/* Price */}
-                          <p className="text-lg font-semibold mt-2">
+                          <p className="mt-2 text-lg font-semibold">
                             {sub.currency} {sub.price.toFixed(2)}
 
-                            <span className="text-sm text-gray-400 font-normal">
+                            <span className="text-sm font-normal text-gray-400">
                               {" / "}
                               {sub.billingCycle}
                             </span>
                           </p>
 
-                          {/* Renewal Date */}
                           {sub.renewalDate && (
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="mt-1 text-sm text-gray-500">
                               Renews:{" "}
                               {new Date(
                                 sub.renewalDate
@@ -156,16 +204,14 @@ export default function DashboardPage() {
                             </p>
                           )}
 
-                          {/* Notes */}
                           {sub.notes && (
-                            <p className="text-sm text-gray-500 mt-2">
+                            <p className="mt-2 text-sm text-gray-500">
                               {sub.notes}
                             </p>
                           )}
                         </CardContent>
 
-                        {/* Lottie Animation - Bottom Right */}
-                        <div className="absolute bottom-1 right-3 w-16 h-20 pointer-events-none">
+                        <div className="pointer-events-none absolute bottom-1 right-3 h-20 w-16">
                           <LottieAnimation />
                         </div>
                       </Card>
@@ -173,17 +219,16 @@ export default function DashboardPage() {
                   }
                 />
 
-                {/* Hover Information */}
                 <HoverCardContent className="w-64">
                   <div className="flex items-center gap-2">
                     <Icon
                       className="h-5 w-5"
-                      style={{ color: service.color }}
+                      style={{
+                        color: service.color,
+                      }}
                     />
 
-                    <div className="font-semibold">
-                      {sub.name}
-                    </div>
+                    <div className="font-semibold">{sub.name}</div>
                   </div>
 
                   <div className="mt-2 text-sm text-muted-foreground">
@@ -215,6 +260,61 @@ export default function DashboardPage() {
           })}
         </div>
       )}
+
+      <AlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+
+          if (!open) {
+            setSelectedSubscription(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-3">
+              {selectedSubscription &&
+                (() => {
+                  const service = getServiceIcon(
+                    selectedSubscription.name
+                  );
+                  const Icon = service.icon;
+
+                  return (
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
+                      <Icon
+                        className="h-5 w-5"
+                        style={{ color: service.color }}
+                      />
+                    </span>
+                  );
+                })()}
+
+              <span>Delete subscription</span>
+            </AlertDialogTitle>
+
+            <AlertDialogDescription className="pt-3 leading-6">
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-foreground">
+                {selectedSubscription?.name}
+              </span>
+              ? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter className="mt-5">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

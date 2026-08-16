@@ -11,6 +11,7 @@ export type Subscription = {
   notes?: string;
   createdAt: string;
   serviceIcon: string | null;
+  notificationEmail: string | null;
 };
 
 type SubscriptionRow = {
@@ -25,6 +26,7 @@ type SubscriptionRow = {
   notes: string | null;
   created_at: string;
   service_icon: string | null;
+  notification_email: string | null;
 };
 
 function mapSubscription(row: SubscriptionRow): Subscription {
@@ -39,6 +41,7 @@ function mapSubscription(row: SubscriptionRow): Subscription {
     notes: row.notes ?? "",
     createdAt: row.created_at,
     serviceIcon: row.service_icon,
+    notificationEmail: row.notification_email,
   };
 }
 
@@ -75,6 +78,7 @@ export async function addSubscription(
       renewal_date: sub.renewalDate || null,
       notes: sub.notes || null,
       service_icon: sub.serviceIcon,
+      notification_email: sub.notificationEmail,
     })
     .select()
     .single();

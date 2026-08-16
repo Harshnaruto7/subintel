@@ -26,7 +26,7 @@ import {
   LayoutDashboard,
   PlusCircle,
   LineChart,
-  ClipboardCheck,
+  BellRing,
   History,
   Sparkles,
   ChevronsUpDown,
@@ -36,12 +36,36 @@ import {
 } from "lucide-react";
 
 const items = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Add Item", url: "/dashboard/add-item", icon: PlusCircle },
-  { title: "Graph of each items", url: "/dashboard/graphs", icon: LineChart },
-  { title: "Total evaluation each app", url: "/dashboard/evaluation", icon: ClipboardCheck },
-  { title: "History", url: "/dashboard/history", icon: History },
-  { title: "AI suggestion", url: "/dashboard/ai-suggestion", icon: Sparkles },
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    title: "Add Item",
+    url: "/dashboard/add-item",
+    icon: PlusCircle,
+  },
+  {
+    title: "Graph of each items",
+    url: "/dashboard/graphs",
+    icon: LineChart,
+  },
+  {
+    title: "Renewals & Alerts",
+    url: "/dashboard/renewals",
+    icon: BellRing,
+  },
+  {
+    title: "History",
+    url: "/dashboard/history",
+    icon: History,
+  },
+  {
+    title: "AI suggestion",
+    url: "/dashboard/ai-suggestion",
+    icon: Sparkles,
+  },
 ];
 
 export function AppSidebar() {
@@ -57,6 +81,7 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
@@ -76,7 +101,11 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
-              <DropdownMenuTrigger render={<SidebarMenuButton className="h-auto py-2" />}>
+              <DropdownMenuTrigger
+                render={
+                  <SidebarMenuButton className="h-auto py-2" />
+                }
+              >
                 {user?.imageUrl ? (
                   <img
                     src={user.imageUrl}
@@ -86,7 +115,11 @@ export function AppSidebar() {
                 ) : (
                   <User className="h-8 w-8" />
                 )}
-                <span className="text-sm">{user?.fullName ?? "Your Profile"}</span>
+
+                <span className="text-sm">
+                  {user?.fullName ?? "Your Profile"}
+                </span>
+
                 <ChevronsUpDown className="ml-auto h-4 w-4" />
               </DropdownMenuTrigger>
 
@@ -94,7 +127,10 @@ export function AppSidebar() {
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium">{user?.fullName}</span>
+                      <span className="text-sm font-medium">
+                        {user?.fullName}
+                      </span>
+
                       <span className="text-xs text-gray-400">
                         {user?.primaryEmailAddress?.emailAddress}
                       </span>
@@ -105,11 +141,16 @@ export function AppSidebar() {
                 <DropdownMenuSeparator />
 
                 <DropdownMenuGroup>
-                  <DropdownMenuItem render={<a href="/dashboard/profile" />}>
+                  <DropdownMenuItem
+                    render={<a href="/dashboard/profile" />}
+                  >
                     <User className="mr-2 h-4 w-4" />
                     Account
                   </DropdownMenuItem>
-                  <DropdownMenuItem render={<a href="/dashboard/settings" />}>
+
+                  <DropdownMenuItem
+                    render={<a href="/dashboard/settings" />}
+                  >
                     <Settings className="mr-2 h-4 w-4" />
                     Settings
                   </DropdownMenuItem>
@@ -118,7 +159,11 @@ export function AppSidebar() {
                 <DropdownMenuSeparator />
 
                 <DropdownMenuGroup>
-                  <DropdownMenuItem onClick={() => signOut({ redirectUrl: "/login" })}>
+                  <DropdownMenuItem
+                    onClick={() =>
+                      signOut({ redirectUrl: "/login" })
+                    }
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
                     Log out
                   </DropdownMenuItem>

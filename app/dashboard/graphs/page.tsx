@@ -25,6 +25,11 @@ import {
   getCategorySpendingData,
 } from "@/components/graphs/graph-data";
 
+import CategoryRadarChart from "@/components/graphs/category-radar-chart";
+
+import SpendingProjectionChart from "@/components/graphs/spending-projection-chart";
+
+
 export default function GraphsPage() {
   const { user } = useUser();
 
@@ -32,10 +37,10 @@ export default function GraphsPage() {
 
   const [subs, setSubs] = useState<Subscription[]>([]);
 
-  const [categories, setCategories] =
-    useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const [mounted, setMounted] = useState(false);
+
 
   useEffect(() => {
     if (!user) return;
@@ -54,6 +59,7 @@ export default function GraphsPage() {
     loadSubscriptions();
   }, [user, supabase]);
 
+
   if (!mounted) {
     return (
       <div>
@@ -68,6 +74,8 @@ export default function GraphsPage() {
     );
   }
 
+
+  // Get category name
   function categoryLabel(id: string) {
     return (
       categories.find(
@@ -76,6 +84,8 @@ export default function GraphsPage() {
     );
   }
 
+
+  // Prepare chart data
   const subscriptionChartData =
     getSubscriptionSpendingData(subs);
 
@@ -85,10 +95,9 @@ export default function GraphsPage() {
       categoryLabel
     );
 
+
   return (
     <div>
-      {/* Page Header */}
-
       <h1 className="text-2xl font-bold">
         Graph of each items
       </h1>
@@ -103,17 +112,27 @@ export default function GraphsPage() {
         </p>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Chart 1 */}
 
+          {/* Chart 1 */}
           <SubscriptionSpendingChart
             data={subscriptionChartData}
           />
 
           {/* Chart 2 */}
-
           <CategorySpendingChart
             data={categoryChartData}
           />
+
+          {/* Chart 3 */}
+          <CategoryRadarChart
+            data={categoryChartData}
+          />
+
+          {/* Chart 4 */}
+          <SpendingProjectionChart
+            subs={subs}
+          />
+
         </div>
       )}
     </div>
