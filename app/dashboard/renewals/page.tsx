@@ -15,6 +15,11 @@ import {
   Subscription,
 } from "@/lib/subscriptions";
 
+import {
+  createSubscriptionReminder,
+  deleteSubscriptionReminders,
+} from "@/lib/reminders";
+
 import { useSupabase } from "@/lib/supabase-client";
 import { getServiceIcon } from "@/lib/service-icons";
 
@@ -74,21 +79,37 @@ export default function RenewalsPage() {
     if (!user) return;
 
     async function loadSubscriptions() {
-      const data = await getSubscriptions(supabase);
+      try {
+        const data = await getSubscriptions(supabase);
 
-      setSubscriptions(data);
+        setSubscriptions(data);
 
-      // Only select the first subscription if
-      // there is currently no subscription selected.
-      setSelectedSubscriptionId((current) => {
-        if (current) {
-          return current;
-        }
+        // Only select the first subscription if
+        // there is currently no subscription selected.
+        setSelectedSubscriptionId((current) => {
+          if (current) {
+            return current;
+          }
 
-        return data.length > 0 ? data[0].id : "";
-      });
+          return data.length > 0 ? data[0].id : "";
+        });
 
-      setMounted(true);
+        setMounted(true);
+      } catch (error) {
+        console.error(
+          "Failed to load subscriptions:",
+          error
+        );
+
+        addToast({
+          title: "Could not load subscriptions",
+          description:
+            "Something went wrong while loading your subscriptions.",
+          type: "error",
+        });
+
+        setMounted(true);
+      }
     }
 
     loadSubscriptions();
@@ -136,12 +157,82 @@ export default function RenewalsPage() {
     );
   }
 
-  function handleSaveAlert() {
+  /**
+   * Converts a Date into YYYY-MM-DD using local date values.
+   * This avoids timezone shifting when saving custom reminders.
+   */
+  function formatDateForDatabase(date: Date) {
+    const year = date.getFullYear();
+
+    const month = String(
+      date.getMonth() + 1
+    ).padStart(2, "0");
+
+    const day = String(
+      date.getDate()
+    ).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
+  /**
+   * Gets the YYYY-MM-DD portion of the renewal date.
+   */
+  function getRenewalDateForDatabase(
+    renewalDate: string
+  ) {
+    return renewalDate.slice(0, 10);
+  }
+
+  /**
+   * Creates a date exactly three days before
+   * the subscription renewal date.
+   */
+  function getThreeDaysBeforeDate(
+    renewalDate: string
+  ) {
+    const renewalDateString =
+      getRenewalDateForDatabase(renewalDate);
+
+    const renewal = new Date(
+      `${renewalDateString}T00:00:00`
+    );
+
+    renewal.setDate(
+      renewal.getDate() - 3
+    );
+
+    return formatDateForDatabase(renewal);
+  }
+
+  async function handleSaveAlert() {
+    if (!user) {
+      addToast({
+        title: "Authentication required",
+        description:
+          "Please sign in before creating an alert.",
+        type: "error",
+      });
+
+      return;
+    }
+
     if (!selectedSubscription) {
       addToast({
         title: "Select a subscription",
         description:
           "Choose a subscription before creating an alert.",
+        type: "error",
+      });
+
+      return;
+    }
+
+    if (!selectedSubscription.renewalDate) {
+      addToast({
+        title: "Renewal date missing",
+        description:
+          `${selectedSubscription.name} does not have a renewal date.`,
         type: "error",
       });
 
@@ -174,11 +265,99 @@ export default function RenewalsPage() {
       return;
     }
 
-    addToast({
-      title: "Alert saved",
-      description: `Renewal alerts for ${selectedSubscription.name} have been saved.`,
-      type: "success",
-    });
+    try {
+      /*
+       * Remove existing reminders for this subscription.
+       *
+       * This makes "Save Alert" behave like a settings update:
+       * whatever options are currently selected become the
+       * subscription's active reminder configuration.
+       */
+      await deleteSubscriptionReminders(
+        supabase,
+        selectedSubscription.id
+      );
+
+      const reminders = [];
+
+      /*
+       * 3 DAYS BEFORE RENEWAL
+       */
+      if (threeDaysBefore) {
+        reminders.push({
+          userId: user.id,
+          subscriptionId:
+            selectedSubscription.id,
+          reminderType:
+            "three_days_before" as const,
+          reminderDate:
+            getThreeDaysBeforeDate(
+              selectedSubscription.renewalDate
+            ),
+        });
+      }
+
+      /*
+       * RENEWAL DAY
+       */
+      if (onRenewalDay) {
+        reminders.push({
+          userId: user.id,
+          subscriptionId:
+            selectedSubscription.id,
+          reminderType:
+            "renewal_day" as const,
+          reminderDate:
+            getRenewalDateForDatabase(
+              selectedSubscription.renewalDate
+            ),
+        });
+      }
+
+      /*
+       * CUSTOM REMINDER
+       */
+      if (customReminder && customDate) {
+        reminders.push({
+          userId: user.id,
+          subscriptionId:
+            selectedSubscription.id,
+          reminderType:
+            "custom" as const,
+          reminderDate:
+            formatDateForDatabase(customDate),
+        });
+      }
+
+      /*
+       * Save every selected reminder.
+       */
+      for (const reminder of reminders) {
+        await createSubscriptionReminder(
+          supabase,
+          reminder
+        );
+      }
+
+      addToast({
+        title: "Alert saved",
+        description:
+          `Renewal alerts for ${selectedSubscription.name} have been saved.`,
+        type: "success",
+      });
+    } catch (error) {
+      console.error(
+        "Failed to save alert:",
+        error
+      );
+
+      addToast({
+        title: "Could not save alert",
+        description:
+          "Something went wrong while saving your reminder settings.",
+        type: "error",
+      });
+    }
   }
 
   if (!mounted) {

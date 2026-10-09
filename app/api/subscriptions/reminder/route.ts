@@ -17,11 +17,11 @@ export interface SubscriptionReminder {
   updatedAt: string;
 }
 
-type ReminderRow = {
+type SubscriptionReminderRow = {
   id: string;
   user_id: string;
   subscription_id: string;
-  reminder_type: ReminderType;
+  reminder_type: "three_days_before" | "renewal_day" | "custom";
   reminder_date: string;
   enabled: boolean;
   sent_at: string | null;
@@ -29,7 +29,7 @@ type ReminderRow = {
   updated_at: string;
 };
 
-function mapReminder(row: ReminderRow): SubscriptionReminder {
+function mapReminder(row: SubscriptionReminderRow): SubscriptionReminder {
   return {
     id: row.id,
     userId: row.user_id,
@@ -62,9 +62,7 @@ export async function getReminders(
     throw error;
   }
 
-  return (data ?? []).map((row) =>
-    mapReminder(row as ReminderRow)
-  );
+  return (data ?? []).map(mapReminder);
 }
 
 export async function getSubscriptionReminders(
@@ -88,9 +86,7 @@ export async function getSubscriptionReminders(
     throw error;
   }
 
-  return (data ?? []).map((row) =>
-    mapReminder(row as ReminderRow)
-  );
+  return (data ?? []).map(mapReminder);
 }
 
 export async function deleteSubscriptionReminders(
@@ -142,5 +138,34 @@ export async function createSubscriptionReminder(
     throw error;
   }
 
-  return mapReminder(data as ReminderRow);
+  return mapReminder(data);
+}
+
+export async function getDueReminders(
+  supabase: SupabaseClient
+) {
+  const today = new Date()
+    .toISOString()
+    .split("T")[0];
+
+  const { data, error } = await supabase
+    .from("subscription_reminders")
+    .select("*")
+    .eq("enabled", true)
+    .is("sent_at", null)
+    .lte("reminder_date", today)
+    .order("reminder_date", {
+      ascending: true,
+    });
+
+  if (error) {
+    console.error(
+      "Failed to fetch due reminders:",
+      error
+    );
+
+    throw error;
+  }
+
+  return (data ?? []).map(mapReminder);
 }
